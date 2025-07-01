@@ -1,0 +1,171 @@
+﻿1. Clone Repository
+git clone --branch bird_dev https://github.com/Shiva-OC/bird-bench.git
+
+
+cd bird-bench
+
+
+2. Set Up Python Environment : Using Virtual Environment
+# Create a virtual environment
+python3.11 -m venv birddev_env
+source birddev_env/bin/activate  # On Linux/macOS
+# OR
+birddev_env\Scripts\activate     # On Windows
+
+
+# Install dependencies
+pip install -r requirements.txt
+
+
+3. Download and Extract Dataset
+mkdir -p llm/dev_data
+
+
+wget https://bird-bench.oss-cn-beijing.aliyuncs.com/dev.zip
+unzip dev.zip -d llm/dev_data/
+Unzip llm/dev_data/dev_20240627/dev_databases.zip
+
+
+# Clean up zip file (optional)
+rm dev.zip
+
+
+
+
+
+
+4. Configure for Custom API Endpoint
+4.1 Configure API Base URL
+Edit llm/src/gpt_request.py to set your API base URL:
+# Find this line (around line 13)
+api_base = os.environ.get("API_BASE", "https://api.openai.com")
+
+
+# Change it to your endpoint's base URL, for example:
+api_base = os.environ.get("API_BASE", "https://your-endpoint.com")
+4.2 Configure Model and API Key
+Edit llm/run/run_gpt.sh to set your model name and API key:
+# Find these lines (around lines 10-18)
+YOUR_API_KEY='' # Add your API key here before running
+engine='inf-2-0-32b-sql' # Replace with your model name
+
+
+# Change them to your actual values:
+YOUR_API_KEY='your-actual-api-key'
+engine='your-model-name'  # e.g., gpt-4, claude-3-opus, etc.
+
+
+
+
+4.3 Run the following command to generate ground truth.
+ sh run_gpt.sh
+
+
+5. Run Tests with SQLite (Simplest Option)
+
+
+SQLite is the easiest to start with since it doesn't require any database installation.
+# Make scripts executable
+chmod +x llm/run/run_gpt.sh
+chmod +x evaluation/run_evaluation.sh
+
+
+# Run the inference step with your model
+cd llm/run
+./run_gpt.sh
+
+
+# Run the evaluation
+cd ../../evaluation
+./run_evaluation.sh
+The above commands runs bird eval for all the DB’s in the dev dataset.
+
+
+6. Running Bird eval for specific database
+
+
+Run the following scripts by replacing the name of the appropriate DB(eg: financial in the below script) to curate dev.json and dev.sql for required DB. The example below creates dev_financial.sql & dev_financial.json files for financial DB.
+
+
+
+
+import json
+
+
+# Load dev.json to map index to db_id
+with open('llm/data/dev_20240627/dev.json', 'r') as f:
+   dev_data = json.load(f)
+
+
+# Build a mapping from index to db_id
+index_to_dbid = {i: item['db_id'] for i, item in enumerate(dev_data)}
+
+
+# Read dev.sql and extract financial SQLs with their id
+financial_sqls = []
+with open('llm/data/dev_20240627/dev.sql', 'r') as f:
+   for idx, line in enumerate(f):
+       if line.strip().endswith('financial'):
+           sql = line.strip()
+           # Save as tuple (id, sql)
+           financial_sqls.append({'id': idx, 'sql': sql})
+
+
+# Save to dev_gold_financial.sql
+with open('llm/data/financial/dev_financial.sql', 'w') as f:
+   for entry in financial_sqls:
+       f.write(f"{entry['id']}\t{entry['sql']}\n")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import json
+
+
+# Load the dev.json file
+with open('llm/data/dev_20240627/dev.json', 'r') as f:
+   data = json.load(f)
+
+
+# Extract all financial questions, keeping their id (index)
+financial = []
+for idx, item in enumerate(data):
+   if item.get('db_id') == 'financial':
+       # Add the original index as 'id'
+       item_with_id = dict(item)
+       item_with_id['id'] = idx
+       financial.append(item_with_id)
+
+
+# Save to dev_financial.json
+with open('llm/data/financial/dev_financial.json', 'w') as f:
+   json.dump(financial, f, indent=2)
+
+
+print(f"Extracted {len(financial)} financial questions.")
+
+
+
+
+
+
+
+
+And replace the following parameters in run_evaluate.sh to point to the corresponding dev_<dbname>.json and dev_<dbname>.sql before running evaluation using the following command:
+./run_evaluation.sh
+
+
+7. The evaluation results will be available in the following path:
+~/bird-bench/eval_result
