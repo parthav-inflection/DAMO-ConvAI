@@ -7,7 +7,7 @@ mode='dev' # choose dev or dev
 cot='True'
 no_cot='False'
 
-YOUR_API_KEY='iai-qN3iU0xE06L8M5EsZZqhRxXlxycKrOxaj7LE4JRkaWTyZuK9'
+YOUR_API_KEY=''
 
 engine1='code-davinci-002'
 engine2='text-davinci-003'

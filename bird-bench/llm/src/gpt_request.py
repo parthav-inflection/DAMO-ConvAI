@@ -19,7 +19,7 @@ import threading
 '''openai configure'''
 
 # Configure API base URL for custom endpoints
-openai.api_base = os.environ.get("API_BASE", "https://layercake.tacos.inf7ll8.com/model/inf-2-0-32b-sql/v1")
+openai.api_base = os.environ.get("API_BASE", "")
 
 openai.debug=True
 
