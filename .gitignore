@@ -9,3 +9,4 @@ SDPO/dpo.rdb
 
 # Dataset files (can be downloaded separately)
 bird-bench/llm/dev_data/dev_20240627/
+.DS_Store
